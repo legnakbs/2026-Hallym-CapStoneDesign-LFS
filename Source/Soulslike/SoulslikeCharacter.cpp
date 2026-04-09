@@ -11,6 +11,7 @@
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
 #include "Soulslike.h"
+#include "SoulslikePlayerState.h"
 
 ASoulslikeCharacter::ASoulslikeCharacter()
 {
@@ -69,6 +70,16 @@ void ASoulslikeCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
 	else
 	{
 		UE_LOG(LogSoulslike, Error, TEXT("'%s' Failed to find an Enhanced Input component! This template is built to use the Enhanced Input system. If you intend to use the legacy system, then you will need to update this C++ file."), *GetNameSafe(this));
+	}
+}
+
+void ASoulslikeCharacter::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+
+	ASoulslikePlayerState* ps = GetPlayerState<ASoulslikePlayerState>();
+	if (ps) {
+		ps->GetAbilitySystemComponent()->InitAbilityActorInfo(ps, this);
 	}
 }
 

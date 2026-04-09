@@ -59,6 +59,9 @@ protected:
 	/** Initialize input action bindings */
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	// link playerstate when possessed
+	virtual void PossessedBy(AController* NewController) override;
+
 protected:
 
 	/** Called for movement input */
