@@ -14,6 +14,7 @@ public class Soulslike : ModuleRules
 			"Engine",
 			"InputCore",
 			"EnhancedInput",
+			"GameplayAbilities",
 			"AIModule",
 			"StateTreeModule",
 			"GameplayStateTreeModule",
