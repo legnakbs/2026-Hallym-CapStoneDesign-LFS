@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Logging/LogMacros.h"
+
 #include "SoulslikeCharacter.generated.h"
 
 class USpringArmComponent;
@@ -49,6 +50,10 @@ protected:
 	UPROPERTY(EditAnywhere, Category="Input")
 	UInputAction* MouseLookAction;
 
+	// light attack action IA_light_attack
+	UPROPERTY(EditAnywhere, Category = "Input");
+	UInputAction* LightAttackAction;
+
 public:
 
 	/** Constructor */
@@ -59,6 +64,9 @@ protected:
 	/** Initialize input action bindings */
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	// link playerstate when possessed
+	virtual void PossessedBy(AController* NewController) override;
+
 protected:
 
 	/** Called for movement input */
@@ -66,6 +74,9 @@ protected:
 
 	/** Called for looking input */
 	void Look(const FInputActionValue& Value);
+
+	// ligth attack
+	void LightAttack();
 
 public:
 
@@ -84,6 +95,10 @@ public:
 	/** Handles jump pressed inputs from either controls or UI interfaces */
 	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void DoJumpEnd();
+
+	// handle light attack
+	UFUNCTION(BlueprintCallable, Category = "Input")
+	virtual void DoLightAttack();
 
 public:
 
