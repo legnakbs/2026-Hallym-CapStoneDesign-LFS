@@ -12,6 +12,10 @@
 #include "InputActionValue.h"
 #include "Soulslike.h"
 #include "SoulslikePlayerState.h"
+#include "AbilitySystemComponent.h"
+#include "GameplayTagContainer.h"
+
+DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
 ASoulslikeCharacter::ASoulslikeCharacter()
 {
@@ -66,6 +70,9 @@ void ASoulslikeCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
 
 		// Looking
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ASoulslikeCharacter::Look);
+
+		// light attack
+		EnhancedInputComponent->BindAction(LightAttackAction, ETriggerEvent::Started, this, &ASoulslikeCharacter::LightAttack);
 	}
 	else
 	{
@@ -80,6 +87,8 @@ void ASoulslikeCharacter::PossessedBy(AController* NewController)
 	ASoulslikePlayerState* ps = GetPlayerState<ASoulslikePlayerState>();
 	if (ps) {
 		ps->GetAbilitySystemComponent()->InitAbilityActorInfo(ps, this);
+
+		ps->AddDefaultAbilities();
 	}
 }
 
@@ -99,6 +108,18 @@ void ASoulslikeCharacter::Look(const FInputActionValue& Value)
 
 	// route the input
 	DoLook(LookAxisVector.X, LookAxisVector.Y);
+}
+
+void ASoulslikeCharacter::LightAttack()
+{
+	if (ASoulslikePlayerState* ps = GetPlayerState<ASoulslikePlayerState>()) {
+		UAbilitySystemComponent* ASC = ps->GetAbilitySystemComponent();
+
+		if (ASC) {
+			FGameplayTag attackTag = FGameplayTag::RequestGameplayTag(FName("PlayerAbility.Attack.Light"));
+			ASC->TryActivateAbilitiesByTag(FGameplayTagContainer(attackTag));
+		}
+	}
 }
 
 void ASoulslikeCharacter::DoMove(float Right, float Forward)
@@ -141,4 +162,9 @@ void ASoulslikeCharacter::DoJumpEnd()
 {
 	// signal the character to stop jumping
 	StopJumping();
+}
+
+void ASoulslikeCharacter::DoLightAttack()
+{
+	LightAttack();
 }
