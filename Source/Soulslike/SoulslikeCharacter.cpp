@@ -94,6 +94,12 @@ void ASoulslikeCharacter::PossessedBy(AController* NewController)
 
 void ASoulslikeCharacter::Move(const FInputActionValue& Value)
 {
+	if (ASoulslikePlayerState* ps = GetPlayerState<ASoulslikePlayerState>()) {
+		if (ps->GetAbilitySystemComponent()->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag(FName("State.Attacking")))) {
+			return; // don't move while attacking 
+		}
+	}
+
 	// input is a Vector2D
 	FVector2D MovementVector = Value.Get<FVector2D>();
 
