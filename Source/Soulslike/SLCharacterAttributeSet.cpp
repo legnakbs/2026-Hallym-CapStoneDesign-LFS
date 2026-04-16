@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
+#include "GameplayEffectExtension.h"
 #include "SLCharacterAttributeSet.h"
 
 USLCharacterAttributeSet::USLCharacterAttributeSet() :
@@ -70,5 +71,15 @@ void USLCharacterAttributeSet::PreAttributeChange(const FGameplayAttribute& Attr
 	else if (Attribute == GetLevelAttribute())
 	{
 		NewValue = FMath::Clamp(NewValue, 0, GetMaxLevel());
+	}
+}
+
+void USLCharacterAttributeSet::PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data)
+{
+	if (Data.EvaluatedData.Attribute == GetDamageAttribute())
+	{
+		const float Incoming = GetDamage();
+		SetDamage(0.f);
+		SetHealth(FMath::Clamp(GetHealth() - Incoming, 0.f, GetMaxHealth()));
 	}
 }
