@@ -14,6 +14,7 @@
 #include "SoulslikePlayerState.h"
 #include "AbilitySystemComponent.h"
 #include "GameplayTagContainer.h"
+#include "Abilities/SLSkillTypes.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -73,6 +74,16 @@ void ASoulslikeCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
 
 		// light attack
 		EnhancedInputComponent->BindAction(LightAttackAction, ETriggerEvent::Started, this, &ASoulslikeCharacter::LightAttack);
+
+		// skills
+		if (SkillOneAction)
+		{
+			EnhancedInputComponent->BindAction(SkillOneAction, ETriggerEvent::Started, this, &ASoulslikeCharacter::SkillOne);
+		}
+		if (SkillTwoAction)
+		{
+			EnhancedInputComponent->BindAction(SkillTwoAction, ETriggerEvent::Started, this, &ASoulslikeCharacter::SkillTwo);
+		}
 	}
 	else
 	{
@@ -173,4 +184,36 @@ void ASoulslikeCharacter::DoJumpEnd()
 void ASoulslikeCharacter::DoLightAttack()
 {
 	LightAttack();
+}
+
+void ASoulslikeCharacter::SkillOne()
+{
+	DoActivateSkill(ESLSkillSlot::SkillOne);
+}
+
+void ASoulslikeCharacter::SkillTwo()
+{
+	DoActivateSkill(ESLSkillSlot::SkillTwo);
+}
+
+void ASoulslikeCharacter::DoActivateSkill(ESLSkillSlot Slot)
+{
+	ASoulslikePlayerState* ps = GetPlayerState<ASoulslikePlayerState>();
+	if (!ps) { return; }
+
+	UAbilitySystemComponent* ASC = ps->GetAbilitySystemComponent();
+	if (!ASC) { return; }
+
+	FName TagName;
+	switch (Slot)
+	{
+	case ESLSkillSlot::SkillOne:	TagName = SLSkillTags::Activate_SkillOne; break;
+	case ESLSkillSlot::SkillTwo:	TagName = SLSkillTags::Activate_SkillTwo; break;
+	default: return;
+	}
+
+	FGameplayTag SkillTag = FGameplayTag::RequestGameplayTag(TagName, /*ErrorIfNotFound*/ false);
+	if (!SkillTag.IsValid()) { return; }
+
+	ASC->TryActivateAbilitiesByTag(FGameplayTagContainer(SkillTag));
 }
