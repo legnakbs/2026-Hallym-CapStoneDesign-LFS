@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Logging/LogMacros.h"
+#include "Abilities/SLSkillTypes.h"
 
 #include "SoulslikeCharacter.generated.h"
 
@@ -54,6 +55,14 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Input");
 	UInputAction* LightAttackAction;
 
+	/** Skill slot 1 input action. */
+	UPROPERTY(EditAnywhere, Category = "Input")
+	UInputAction* SkillOneAction;
+
+	/** Skill slot 2 input action. */
+	UPROPERTY(EditAnywhere, Category = "Input")
+	UInputAction* SkillTwoAction;
+
 public:
 
 	/** Constructor */
@@ -78,6 +87,10 @@ protected:
 	// ligth attack
 	void LightAttack();
 
+	/** Input handlers — route to DoActivateSkill with the corresponding slot. */
+	void SkillOne();
+	void SkillTwo();
+
 public:
 
 	/** Handles move inputs from either controls or UI interfaces */
@@ -99,6 +112,10 @@ public:
 	// handle light attack
 	UFUNCTION(BlueprintCallable, Category = "Input")
 	virtual void DoLightAttack();
+
+	/** Activate the skill bound to the given slot. Safe to call from BP / UI. */
+	UFUNCTION(BlueprintCallable, Category = "Input|Skill")
+	virtual void DoActivateSkill(ESLSkillSlot Slot);
 
 public:
 
