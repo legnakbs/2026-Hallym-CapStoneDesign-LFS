@@ -14,6 +14,8 @@
 #include "SoulslikePlayerState.h"
 #include "AbilitySystemComponent.h"
 #include "GameplayTagContainer.h"
+#include "Kismet/KismetSystemLibrary.h"
+#include "AbilitySystemBlueprintLibrary.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -53,6 +55,43 @@ ASoulslikeCharacter::ASoulslikeCharacter()
 
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
+}
+
+void ASoulslikeCharacter::PerformWeaponTrace()
+{
+	FVector start = GetMesh()->GetSocketLocation("Socket_weapon_base");
+	FVector end = GetMesh()->GetSocketLocation("Socket_weapon_tip");
+
+	TArray<AActor*> actorsToIgnore;
+	actorsToIgnore.Add(this);
+	FHitResult hitresult;
+
+	bool bHit = UKismetSystemLibrary::SphereTraceSingle(
+		this, start, end, 15.0f,
+		UEngineTypes::ConvertToTraceType(ECC_Pawn),
+		false, actorsToIgnore, EDrawDebugTrace::ForDuration,
+		hitresult, true
+	);
+
+	if (bHit && hitresult.GetActor()) {
+		AActor* hitActor = hitresult.GetActor();
+
+		if (!AlreadyHitActors.Contains(hitActor)) {
+			AlreadyHitActors.Add(hitActor);
+
+			FGameplayEventData payload;
+			payload.Instigator = this;
+			payload.Target = hitActor;
+
+			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, FGameplayTag::RequestGameplayTag(FName("Event.Combat.HitLanded")), payload);
+			GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Green, TEXT("Hit Landed!"));
+		}
+	}
+}
+
+void ASoulslikeCharacter::ClearHitList()
+{
+	AlreadyHitActors.Empty();
 }
 
 void ASoulslikeCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -126,6 +165,12 @@ void ASoulslikeCharacter::LightAttack()
 			ASC->TryActivateAbilitiesByTag(FGameplayTagContainer(attackTag));
 		}
 	}
+}
+
+UAbilitySystemComponent* ASoulslikeCharacter::GetAbilitySystemComponent() const
+{
+	ASoulslikePlayerState* ps = GetPlayerState<ASoulslikePlayerState>();
+	return ps ? ps->GetAbilitySystemComponent() : nullptr;
 }
 
 void ASoulslikeCharacter::DoMove(float Right, float Forward)

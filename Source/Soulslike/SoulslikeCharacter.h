@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Logging/LogMacros.h"
+#include "AbilitySystemInterface.h"
 
 #include "SoulslikeCharacter.generated.h"
 
@@ -20,7 +21,7 @@ DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
  *  Implements a controllable orbiting camera
  */
 UCLASS(abstract)
-class ASoulslikeCharacter : public ACharacter
+class ASoulslikeCharacter : public ACharacter, public IAbilitySystemInterface
 {
 	GENERATED_BODY()
 
@@ -54,10 +55,15 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Input");
 	UInputAction* LightAttackAction;
 
+	// The list of enemies hit during the current swing
+	UPROPERTY()
+	TArray<AActor*> AlreadyHitActors;
+
 public:
 
 	/** Constructor */
 	ASoulslikeCharacter();	
+
 
 protected:
 
@@ -78,7 +84,12 @@ protected:
 	// ligth attack
 	void LightAttack();
 
+
+
 public:
+
+	UFUNCTION(BlueprintCallable, Category = "GAS")
+	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 
 	/** Handles move inputs from either controls or UI interfaces */
 	UFUNCTION(BlueprintCallable, Category="Input")
@@ -99,6 +110,15 @@ public:
 	// handle light attack
 	UFUNCTION(BlueprintCallable, Category = "Input")
 	virtual void DoLightAttack();
+
+	// visual trace
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	void PerformWeaponTrace();
+
+	// Clears the hit list (Call this when the hitbox starts)
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	void ClearHitList();
+
 
 public:
 
