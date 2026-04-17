@@ -16,6 +16,7 @@
 #include "GameplayTagContainer.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "AbilitySystemBlueprintLibrary.h"
+#include "GameplayEffect.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -79,12 +80,26 @@ void ASoulslikeCharacter::PerformWeaponTrace()
 		if (!AlreadyHitActors.Contains(hitActor)) {
 			AlreadyHitActors.Add(hitActor);
 
-			FGameplayEventData payload;
-			payload.Instigator = this;
-			payload.Target = hitActor;
+			IAbilitySystemInterface* hitInterface = Cast<IAbilitySystemInterface>(hitActor);
+			if (hitInterface) {
+				UAbilitySystemComponent* targetASC = hitInterface->GetAbilitySystemComponent();
+				UAbilitySystemComponent* myASC = GetAbilitySystemComponent();
 
-			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, FGameplayTag::RequestGameplayTag(FName("Event.Combat.HitLanded")), payload);
-			GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Green, TEXT("Hit Landed!"));
+				if (targetASC && myASC) {
+					FGameplayEffectContextHandle effectHandle = myASC->MakeEffectContext();
+					effectHandle.AddHitResult(hitresult);
+
+					FGameplayEventData payload;
+					payload.Instigator = this;
+					payload.Target = hitActor;
+					payload.ContextHandle = effectHandle;
+
+					UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, FGameplayTag::RequestGameplayTag(FName("Event.Combat.HitLanded")), payload);
+					GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Green, TEXT("Hit Landed!"));
+				}
+			}
+
+
 		}
 	}
 }
