@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "Logging/LogMacros.h"
 #include "Abilities/SLSkillTypes.h"
+#include "AbilitySystemInterface.h"
 
 #include "SoulslikeCharacter.generated.h"
 
@@ -21,7 +22,7 @@ DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
  *  Implements a controllable orbiting camera
  */
 UCLASS(abstract)
-class ASoulslikeCharacter : public ACharacter
+class ASoulslikeCharacter : public ACharacter, public IAbilitySystemInterface
 {
 	GENERATED_BODY()
 
@@ -63,10 +64,15 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Input")
 	UInputAction* SkillTwoAction;
 
+	// The list of enemies hit during the current swing
+	UPROPERTY()
+	TArray<AActor*> AlreadyHitActors;
+
 public:
 
 	/** Constructor */
 	ASoulslikeCharacter();	
+
 
 protected:
 
@@ -93,6 +99,9 @@ protected:
 
 public:
 
+	UFUNCTION(BlueprintCallable, Category = "GAS")
+	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+
 	/** Handles move inputs from either controls or UI interfaces */
 	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void DoMove(float Right, float Forward);
@@ -116,6 +125,14 @@ public:
 	/** Activate the skill bound to the given slot. Safe to call from BP / UI. */
 	UFUNCTION(BlueprintCallable, Category = "Input|Skill")
 	virtual void DoActivateSkill(ESLSkillSlot Slot);
+
+	// visual trace
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	void PerformWeaponTrace();
+
+	// Clears the hit list (Call this when the hitbox starts)
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	void ClearHitList();
 
 public:
 
