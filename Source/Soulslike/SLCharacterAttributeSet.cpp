@@ -1,8 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "GameplayEffectExtension.h"
 #include "SLCharacterAttributeSet.h"
+#include "GameplayEffectExtension.h"
 
 USLCharacterAttributeSet::USLCharacterAttributeSet() :
 	MaxHealth(100.f),
