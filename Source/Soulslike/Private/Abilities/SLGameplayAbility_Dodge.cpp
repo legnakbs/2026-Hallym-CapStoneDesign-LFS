@@ -40,22 +40,10 @@ USLGameplayAbility_Dodge::USLGameplayAbility_Dodge()
 
 bool USLGameplayAbility_Dodge::CanActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayTagContainer* SourceTags, const FGameplayTagContainer* TargetTags, FGameplayTagContainer* OptionalRelevantTags) const
 {
-	GEngine->AddOnScreenDebugMessage(
-		-1,           // 고유 키 (동일 키 사용 시 메시지 덮어씀, -1은 계속 추가)
-		5.0f,         // 표시 시간 (초)
-		FColor::Green,  // 글자 색상
-		TEXT("Check if can active ability 1")
-	);
 	if (!Super::CanActivateAbility(Handle, ActorInfo, SourceTags, TargetTags, OptionalRelevantTags))
 	{
 		return false;
 	}
-	GEngine->AddOnScreenDebugMessage(
-		-1,           // 고유 키 (동일 키 사용 시 메시지 덮어씀, -1은 계속 추가)
-		5.0f,         // 표시 시간 (초)
-		FColor::Green,  // 글자 색상
-		TEXT("Check if can active ability 2")
-	);
 	
 	// Block dodge if there isn't enough stamina available.
 	if (ActorInfo)
@@ -64,25 +52,11 @@ bool USLGameplayAbility_Dodge::CanActivateAbility(const FGameplayAbilitySpecHand
 		{
 			if (ASC->GetNumericAttribute(USLCharacterAttributeSet::GetStaminaAttribute()) < StaminaCost)
 			{
-				GEngine->AddOnScreenDebugMessage(
-					-1,           // 고유 키 (동일 키 사용 시 메시지 덮어씀, -1은 계속 추가)
-					5.0f,         // 표시 시간 (초)
-					FColor::Green,  // 글자 색상
-					TEXT("Don't have enough stamina")
-				);
-	
 				return false;
 			}
 		}
 	}
 
-	GEngine->AddOnScreenDebugMessage(
-		-1,           // 고유 키 (동일 키 사용 시 메시지 덮어씀, -1은 계속 추가)
-		5.0f,         // 표시 시간 (초)
-		FColor::Green,  // 글자 색상
-		TEXT("Succeed")
-	);
-	
 	return true;
 }
 

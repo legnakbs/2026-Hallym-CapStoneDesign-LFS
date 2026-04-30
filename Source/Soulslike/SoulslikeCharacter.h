@@ -39,7 +39,7 @@ class ASoulslikeCharacter : public ACharacter, public IAbilitySystemInterface
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
 	USLLockOnComponent* LockOnComponent;
 
-protected:
+protected: 
 	
 	/** Move Input Action */
 	UPROPERTY(EditAnywhere, Category="Input")
