@@ -11,7 +11,6 @@ class UGameplayEffect;
 class UAnimMontage;
 class USkeletalMesh;
 class UStaticMesh;
-class UTexture2D;
 
 /**
  * Data-driven weapon definition. One asset per weapon; AWeaponBase reads from it on BeginPlay
@@ -30,18 +29,9 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Identity")
 	FText DisplayName;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Identity", meta = (MultiLine = true))
-	FText Description;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Identity")
-	TSoftObjectPtr<UTexture2D> Icon;
-
 	// ---- Classification --------------------------------------------------
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Classification")
 	ESLWeaponCategory Category = ESLWeaponCategory::Straight;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Classification")
-	ESLWeaponSlot Slot = ESLWeaponSlot::MainHand;
 
 	/** Gameplay tags describing this weapon (e.g. Weapon.Melee.Sword). Used by GE queries. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Classification")
@@ -72,9 +62,6 @@ public:
 	// ---- Combat Stats ----------------------------------------------------
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Stats", meta = (ClampMin = "0.0"))
 	float BaseDamage = 10.f;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Stats")
-	ESLDamageType DamageType = ESLDamageType::Slash;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Stats", meta = (ClampMin = "0.0"))
 	float StaminaCostLight = 15.f;
