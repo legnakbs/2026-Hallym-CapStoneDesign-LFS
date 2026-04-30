@@ -54,4 +54,17 @@ namespace SLCombatTags
 
 	// SetByCaller magnitude tag for poise damage. Same pattern as Damage.
 	static const FName SetByCaller_PoiseDamage = TEXT("Data.Damage.Poise");
+
+	// SetByCaller magnitude tag for stamina cost. USLGE_StaminaCost reads this and
+	// subtracts it from the Stamina attribute.
+	static const FName SetByCaller_StaminaCost = TEXT("Data.Cost.Stamina");
+
+	// State tags applied during dodge / invulnerability windows. Other abilities
+	// query / block on these (e.g. attack abilities cancelled by State.Dodging,
+	// damage GEs short-circuit on State.Invulnerable).
+	static const FName State_Dodging = TEXT("State.Dodging");
+	static const FName State_Invulnerable = TEXT("State.Invulnerable");
+
+	// Activation tag for the dodge ability — character input maps to this.
+	static const FName Activate_Dodge = TEXT("PlayerAbility.Dodge");
 }

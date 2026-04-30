@@ -64,6 +64,10 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Input")
 	UInputAction* SkillTwoAction;
 
+	/** Dodge / roll input action — drives PlayerAbility.Dodge. */
+	UPROPERTY(EditAnywhere, Category = "Input")
+	UInputAction* DodgeAction;
+
 	// The list of enemies hit during the current swing
 	UPROPERTY()
 	TArray<AActor*> AlreadyHitActors;
@@ -97,6 +101,9 @@ protected:
 	void SkillOne();
 	void SkillTwo();
 
+	/** Dodge input handler — activates the dodge ability. */
+	void Dodge();
+
 public:
 
 	UFUNCTION(BlueprintCallable, Category = "GAS")
@@ -125,6 +132,25 @@ public:
 	/** Activate the skill bound to the given slot. Safe to call from BP / UI. */
 	UFUNCTION(BlueprintCallable, Category = "Input|Skill")
 	virtual void DoActivateSkill(ESLSkillSlot Slot);
+
+	/** Activate the dodge ability via its activation tag. Safe to call from BP / UI. */
+	UFUNCTION(BlueprintCallable, Category = "Input")
+	virtual void DoDodge();
+
+	/**
+	 * Apply a stamina cost to this character via USLGE_StaminaCost. Pass a POSITIVE
+	 * cost — the helper negates internally before packing the SetByCaller magnitude.
+	 * Returns true if the cost was applied (i.e. the character had an ASC).
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Combat|Stamina")
+	virtual bool ApplyStaminaCost(float Cost);
+
+	/**
+	 * Returns true if Stamina >= RequiredAmount. Lightweight check for combat
+	 * abilities to call before committing.
+	 */
+	UFUNCTION(BlueprintPure, Category = "Combat|Stamina")
+	bool HasEnoughStamina(float RequiredAmount) const;
 
 	// visual trace
 	UFUNCTION(BlueprintCallable, Category = "Combat")

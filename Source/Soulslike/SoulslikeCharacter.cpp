@@ -15,6 +15,9 @@
 #include "AbilitySystemComponent.h"
 #include "GameplayTagContainer.h"
 #include "Abilities/SLSkillTypes.h"
+#include "Abilities/SLGE_StaminaCost.h"
+#include "SLCharacterAttributeSet.h"
+#include "Weapons/SLWeaponTypes.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "GameplayEffect.h"
@@ -138,6 +141,12 @@ void ASoulslikeCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
 		{
 			EnhancedInputComponent->BindAction(SkillTwoAction, ETriggerEvent::Started, this, &ASoulslikeCharacter::SkillTwo);
 		}
+
+		// dodge
+		if (DodgeAction)
+		{
+			EnhancedInputComponent->BindAction(DodgeAction, ETriggerEvent::Started, this, &ASoulslikeCharacter::Dodge);
+		}
 	}
 	else
 	{
@@ -254,6 +263,54 @@ void ASoulslikeCharacter::SkillOne()
 void ASoulslikeCharacter::SkillTwo()
 {
 	DoActivateSkill(ESLSkillSlot::SkillTwo);
+}
+
+void ASoulslikeCharacter::Dodge()
+{
+	DoDodge();
+}
+
+void ASoulslikeCharacter::DoDodge()
+{
+	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
+	{
+		const FGameplayTag DodgeTag = FGameplayTag::RequestGameplayTag(SLCombatTags::Activate_Dodge, /*ErrorIfNotFound*/ false);
+		if (DodgeTag.IsValid())
+		{
+			ASC->TryActivateAbilitiesByTag(FGameplayTagContainer(DodgeTag));
+		}
+	}
+}
+
+bool ASoulslikeCharacter::ApplyStaminaCost(float Cost)
+{
+	if (Cost <= 0.f) { return false; }
+
+	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
+	if (!ASC) { return false; }
+
+	FGameplayEffectContextHandle Ctx = ASC->MakeEffectContext();
+	Ctx.AddSourceObject(this);
+	FGameplayEffectSpecHandle SpecHandle = ASC->MakeOutgoingSpec(USLGE_StaminaCost::StaticClass(), 1.f, Ctx);
+	if (!SpecHandle.IsValid()) { return false; }
+
+	const FGameplayTag CostTag = FGameplayTag::RequestGameplayTag(SLCombatTags::SetByCaller_StaminaCost, /*ErrorIfNotFound*/ false);
+	if (CostTag.IsValid())
+	{
+		// Pass negative so the additive modifier subtracts from Stamina.
+		SpecHandle.Data->SetSetByCallerMagnitude(CostTag, -Cost);
+	}
+	ASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+	return true;
+}
+
+bool ASoulslikeCharacter::HasEnoughStamina(float RequiredAmount) const
+{
+	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
+	{
+		return ASC->GetNumericAttribute(USLCharacterAttributeSet::GetStaminaAttribute()) >= RequiredAmount;
+	}
+	return false;
 }
 
 void ASoulslikeCharacter::DoActivateSkill(ESLSkillSlot Slot)
