@@ -168,9 +168,14 @@ void ASoulslikeCharacter::PossessedBy(AController* NewController)
 
 void ASoulslikeCharacter::Move(const FInputActionValue& Value)
 {
+	if (IsDead())
+	{
+		return; // dead characters do not accept movement input
+	}
+
 	if (ASoulslikePlayerState* ps = GetPlayerState<ASoulslikePlayerState>()) {
 		if (ps->GetAbilitySystemComponent()->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag(FName("State.Attacking")))) {
-			return; // don't move while attacking 
+			return; // don't move while attacking
 		}
 	}
 
@@ -309,6 +314,16 @@ bool ASoulslikeCharacter::HasEnoughStamina(float RequiredAmount) const
 	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
 	{
 		return ASC->GetNumericAttribute(USLCharacterAttributeSet::GetStaminaAttribute()) >= RequiredAmount;
+	}
+	return false;
+}
+
+bool ASoulslikeCharacter::IsDead() const
+{
+	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
+	{
+		const FGameplayTag DeadTag = FGameplayTag::RequestGameplayTag(SLCombatTags::State_Dead, /*ErrorIfNotFound*/ false);
+		return DeadTag.IsValid() && ASC->HasMatchingGameplayTag(DeadTag);
 	}
 	return false;
 }

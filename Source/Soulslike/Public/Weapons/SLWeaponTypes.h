@@ -67,4 +67,12 @@ namespace SLCombatTags
 
 	// Activation tag for the dodge ability — character input maps to this.
 	static const FName Activate_Dodge = TEXT("PlayerAbility.Dodge");
+
+	// Applied as a loose gameplay tag on the actor's ASC when Health hits 0.
+	// Movement / input / abilities short-circuit on this.
+	static const FName State_Dead = TEXT("State.Dead");
+
+	// Sent as a gameplay event the moment a lethal hit lands. Listeners are
+	// expected on the dying actor — death montage, ragdoll, AI cleanup, etc.
+	static const FName Event_Death = TEXT("Event.Combat.Death");
 }

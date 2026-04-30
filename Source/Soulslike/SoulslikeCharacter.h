@@ -152,6 +152,10 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Combat|Stamina")
 	bool HasEnoughStamina(float RequiredAmount) const;
 
+	/** True once the lethal hit has set State.Dead on this actor's ASC. */
+	UFUNCTION(BlueprintPure, Category = "Combat|Status")
+	bool IsDead() const;
+
 	// visual trace
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	void PerformWeaponTrace();
