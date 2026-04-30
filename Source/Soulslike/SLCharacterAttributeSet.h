@@ -69,4 +69,8 @@ protected:
 	
 	UPROPERTY(BlueprintReadOnly, Category="Attribute")
 	FGameplayAttributeData Damage;
+
+private:
+	/** Timer used to clear State.Stamina.Spending after the player stops spending stamina. */
+	FTimerHandle StaminaSpendingClearTimer;
 };

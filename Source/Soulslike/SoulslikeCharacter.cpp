@@ -16,6 +16,7 @@
 #include "GameplayTagContainer.h"
 #include "Abilities/SLSkillTypes.h"
 #include "Abilities/SLGE_StaminaCost.h"
+#include "Abilities/SLGE_StaminaRegen.h"
 #include "SLCharacterAttributeSet.h"
 #include "Combat/SLLockOnComponent.h"
 #include "Weapons/SLWeaponTypes.h"
@@ -165,9 +166,23 @@ void ASoulslikeCharacter::PossessedBy(AController* NewController)
 
 	ASoulslikePlayerState* ps = GetPlayerState<ASoulslikePlayerState>();
 	if (ps) {
-		ps->GetAbilitySystemComponent()->InitAbilityActorInfo(ps, this);
+		UAbilitySystemComponent* ASC = ps->GetAbilitySystemComponent();
+		ASC->InitAbilityActorInfo(ps, this);
 
 		ps->AddDefaultAbilities();
+
+		// Apply the always-on stamina regen GE. It pauses itself via
+		// OngoingTagRequirements while State.Stamina.Spending is on the ASC.
+		if (ASC && HasAuthority())
+		{
+			FGameplayEffectContextHandle Ctx = ASC->MakeEffectContext();
+			Ctx.AddSourceObject(this);
+			FGameplayEffectSpecHandle Spec = ASC->MakeOutgoingSpec(USLGE_StaminaRegen::StaticClass(), 1.f, Ctx);
+			if (Spec.IsValid())
+			{
+				ASC->ApplyGameplayEffectSpecToSelf(*Spec.Data.Get());
+			}
+		}
 	}
 }
 

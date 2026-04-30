@@ -4,7 +4,16 @@
 #include "SLCharacterAttributeSet.h"
 #include "GameplayEffectExtension.h"
 #include "AbilitySystemBlueprintLibrary.h"
+#include "Engine/World.h"
+#include "TimerManager.h"
 #include "Weapons/SLWeaponTypes.h"
+
+namespace
+{
+	// How long Stamina must go untouched before regen resumes. Short enough to feel
+	// responsive, long enough that mid-combo regen doesn't refund stamina cost.
+	constexpr float StaminaRegenResumeDelay = 0.4f;
+}
 
 USLCharacterAttributeSet::USLCharacterAttributeSet() :
 	MaxHealth(100.f),
@@ -78,6 +87,41 @@ void USLCharacterAttributeSet::PreAttributeChange(const FGameplayAttribute& Attr
 
 void USLCharacterAttributeSet::PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data)
 {
+	// Stamina spend → set State.Stamina.Spending and (re)arm a timer to clear it.
+	// USLGE_StaminaRegen ignores ticks while the tag is present, which produces
+	// the "regen pauses during spend, resumes shortly after" behavior.
+	if (Data.EvaluatedData.Attribute == GetStaminaAttribute() && Data.EvaluatedData.Magnitude < 0.f)
+	{
+		UAbilitySystemComponent* TargetASC = &Data.Target;
+		const FGameplayTag SpendingTag = FGameplayTag::RequestGameplayTag(SLCombatTags::State_StaminaSpending, /*ErrorIfNotFound*/ false);
+		if (TargetASC && SpendingTag.IsValid())
+		{
+			// Use SetLooseGameplayTagCount instead of AddLooseGameplayTag so repeated
+			// spends don't stack a counter we'd then need to drain.
+			TargetASC->SetLooseGameplayTagCount(SpendingTag, 1);
+
+			if (AActor* Owner = TargetASC->GetOwnerActor())
+			{
+				if (UWorld* World = Owner->GetWorld())
+				{
+					TWeakObjectPtr<UAbilitySystemComponent> WeakASC(TargetASC);
+					World->GetTimerManager().ClearTimer(StaminaSpendingClearTimer);
+					World->GetTimerManager().SetTimer(
+						StaminaSpendingClearTimer,
+						[WeakASC, SpendingTag]()
+						{
+							if (UAbilitySystemComponent* ASC = WeakASC.Get())
+							{
+								ASC->SetLooseGameplayTagCount(SpendingTag, 0);
+							}
+						},
+						StaminaRegenResumeDelay,
+						/*bLoop*/ false);
+				}
+			}
+		}
+	}
+
 	if (Data.EvaluatedData.Attribute == GetDamageAttribute())
 	{
 		const float Incoming = GetDamage();

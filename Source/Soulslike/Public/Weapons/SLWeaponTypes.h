@@ -49,6 +49,12 @@ namespace SLCombatTags
 	// Movement / input / abilities short-circuit on this.
 	static const FName State_Dead = TEXT("State.Dead");
 
+	// Loose tag set whenever Stamina is consumed. USLGE_StaminaRegen lists this
+	// in its OngoingTagRequirements.IgnoreTags so periodic regen ticks pause
+	// while the tag is present. The attribute set clears the tag via timer
+	// after a short delay, which is what makes regen "kick in" after a pause.
+	static const FName State_StaminaSpending = TEXT("State.Stamina.Spending");
+
 	// Sent as a gameplay event the moment a lethal hit lands. Listeners are
 	// expected on the dying actor — death montage, ragdoll, AI cleanup, etc.
 	static const FName Event_Death = TEXT("Event.Combat.Death");
