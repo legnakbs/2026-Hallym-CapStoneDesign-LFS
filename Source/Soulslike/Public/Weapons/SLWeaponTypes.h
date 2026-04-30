@@ -40,3 +40,43 @@ enum class ESLDamageType : uint8
 	Lightning	UMETA(DisplayName = "Lightning"),
 	Dark		UMETA(DisplayName = "Dark")
 };
+
+/**
+ * Centralized gameplay tag names for the combat system. Resolved via
+ * FGameplayTag::RequestGameplayTag at call time — the tags must exist in the
+ * project's tag table (DefaultGameplayTags.ini or equivalent).
+ */
+namespace SLCombatTags
+{
+	// SetByCaller magnitude tag used by USLGE_WeaponDamage. The caller (weapon /
+	// ability) sets this to the final damage value before applying the spec.
+	static const FName SetByCaller_DamageBase = TEXT("Data.Damage.Base");
+
+	// SetByCaller magnitude tag for poise damage. Same pattern as Damage.
+	static const FName SetByCaller_PoiseDamage = TEXT("Data.Damage.Poise");
+
+	// SetByCaller magnitude tag for stamina cost. USLGE_StaminaCost reads this and
+	// subtracts it from the Stamina attribute.
+	static const FName SetByCaller_StaminaCost = TEXT("Data.Cost.Stamina");
+
+	// State tags applied during dodge / invulnerability windows. Other abilities
+	// query / block on these (e.g. attack abilities cancelled by State.Dodging,
+	// damage GEs short-circuit on State.Invulnerable).
+	static const FName State_Dodging = TEXT("State.Dodging");
+	static const FName State_Invulnerable = TEXT("State.Invulnerable");
+
+	// Activation tag for the dodge ability — character input maps to this.
+	static const FName Activate_Dodge = TEXT("PlayerAbility.Dodge");
+
+	// Applied as a loose gameplay tag on the actor's ASC when Health hits 0.
+	// Movement / input / abilities short-circuit on this.
+	static const FName State_Dead = TEXT("State.Dead");
+
+	// Sent as a gameplay event the moment a lethal hit lands. Listeners are
+	// expected on the dying actor — death montage, ragdoll, AI cleanup, etc.
+	static const FName Event_Death = TEXT("Event.Combat.Death");
+
+	// GameplayCue tag triggered on every damage application. BP cue handlers
+	// implement the visual / audio / hit-flinch montage response.
+	static const FName Cue_Hit = TEXT("GameplayCue.Combat.Hit");
+}

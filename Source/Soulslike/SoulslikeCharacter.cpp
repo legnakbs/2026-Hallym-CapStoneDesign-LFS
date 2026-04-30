@@ -15,6 +15,10 @@
 #include "AbilitySystemComponent.h"
 #include "GameplayTagContainer.h"
 #include "Abilities/SLSkillTypes.h"
+#include "Abilities/SLGE_StaminaCost.h"
+#include "SLCharacterAttributeSet.h"
+#include "Combat/SLLockOnComponent.h"
+#include "Weapons/SLWeaponTypes.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "GameplayEffect.h"
@@ -54,6 +58,9 @@ ASoulslikeCharacter::ASoulslikeCharacter()
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 	FollowCamera->bUsePawnControlRotation = false;
+
+	// Lock-on logic component — drives controller rotation while a target is held.
+	LockOnComponent = CreateDefaultSubobject<USLLockOnComponent>(TEXT("LockOnComponent"));
 
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
@@ -138,6 +145,18 @@ void ASoulslikeCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
 		{
 			EnhancedInputComponent->BindAction(SkillTwoAction, ETriggerEvent::Started, this, &ASoulslikeCharacter::SkillTwo);
 		}
+
+		// dodge
+		if (DodgeAction)
+		{
+			EnhancedInputComponent->BindAction(DodgeAction, ETriggerEvent::Started, this, &ASoulslikeCharacter::Dodge);
+		}
+
+		// lock-on
+		if (LockOnAction)
+		{
+			EnhancedInputComponent->BindAction(LockOnAction, ETriggerEvent::Started, this, &ASoulslikeCharacter::LockOnToggle);
+		}
 	}
 	else
 	{
@@ -159,9 +178,14 @@ void ASoulslikeCharacter::PossessedBy(AController* NewController)
 
 void ASoulslikeCharacter::Move(const FInputActionValue& Value)
 {
+	if (IsDead())
+	{
+		return; // dead characters do not accept movement input
+	}
+
 	if (ASoulslikePlayerState* ps = GetPlayerState<ASoulslikePlayerState>()) {
 		if (ps->GetAbilitySystemComponent()->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag(FName("State.Attacking")))) {
-			return; // don't move while attacking 
+			return; // don't move while attacking
 		}
 	}
 
@@ -254,6 +278,72 @@ void ASoulslikeCharacter::SkillOne()
 void ASoulslikeCharacter::SkillTwo()
 {
 	DoActivateSkill(ESLSkillSlot::SkillTwo);
+}
+
+void ASoulslikeCharacter::Dodge()
+{
+	DoDodge();
+}
+
+void ASoulslikeCharacter::LockOnToggle()
+{
+	if (LockOnComponent)
+	{
+		LockOnComponent->ToggleLockOn();
+	}
+}
+
+void ASoulslikeCharacter::DoDodge()
+{
+	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
+	{
+		const FGameplayTag DodgeTag = FGameplayTag::RequestGameplayTag(SLCombatTags::Activate_Dodge, /*ErrorIfNotFound*/ false);
+		if (DodgeTag.IsValid())
+		{
+			ASC->TryActivateAbilitiesByTag(FGameplayTagContainer(DodgeTag));
+		}
+	}
+}
+
+bool ASoulslikeCharacter::ApplyStaminaCost(float Cost)
+{
+	if (Cost <= 0.f) { return false; }
+
+	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
+	if (!ASC) { return false; }
+
+	FGameplayEffectContextHandle Ctx = ASC->MakeEffectContext();
+	Ctx.AddSourceObject(this);
+	FGameplayEffectSpecHandle SpecHandle = ASC->MakeOutgoingSpec(USLGE_StaminaCost::StaticClass(), 1.f, Ctx);
+	if (!SpecHandle.IsValid()) { return false; }
+
+	const FGameplayTag CostTag = FGameplayTag::RequestGameplayTag(SLCombatTags::SetByCaller_StaminaCost, /*ErrorIfNotFound*/ false);
+	if (CostTag.IsValid())
+	{
+		// Pass negative so the additive modifier subtracts from Stamina.
+		SpecHandle.Data->SetSetByCallerMagnitude(CostTag, -Cost);
+	}
+	ASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+	return true;
+}
+
+bool ASoulslikeCharacter::HasEnoughStamina(float RequiredAmount) const
+{
+	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
+	{
+		return ASC->GetNumericAttribute(USLCharacterAttributeSet::GetStaminaAttribute()) >= RequiredAmount;
+	}
+	return false;
+}
+
+bool ASoulslikeCharacter::IsDead() const
+{
+	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
+	{
+		const FGameplayTag DeadTag = FGameplayTag::RequestGameplayTag(SLCombatTags::State_Dead, /*ErrorIfNotFound*/ false);
+		return DeadTag.IsValid() && ASC->HasMatchingGameplayTag(DeadTag);
+	}
+	return false;
 }
 
 void ASoulslikeCharacter::DoActivateSkill(ESLSkillSlot Slot)

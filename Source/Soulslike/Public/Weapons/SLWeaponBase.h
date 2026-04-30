@@ -9,6 +9,7 @@
 class USkeletalMeshComponent;
 class UStaticMeshComponent;
 class UAbilitySystemComponent;
+class UGameplayEffect;
 class USLWeaponDataAsset;
 class ACharacter;
 
@@ -99,6 +100,19 @@ protected:
 	/** Perform the sweep for this frame and broadcast hits. */
 	void PerformHitTrace();
 
+	/**
+	 * Apply the configured damage GE to Target's ASC.
+	 *
+	 * Resolves the GE class in this priority order:
+	 *   1. WeaponData->DamageEffect, if set
+	 *   2. DefaultDamageEffectClass (USLGE_WeaponDamage by default)
+	 *
+	 * Damage magnitude is supplied via SetByCaller("Data.Damage.Base") using
+	 * WeaponData->BaseDamage. Authority-only: damage application is server-side.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Weapon|Combat")
+	virtual void ApplyDamageToTarget(AActor* Target, const FHitResult& Hit);
+
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<USkeletalMeshComponent> SkeletalMeshComp;
@@ -121,6 +135,21 @@ protected:
 	/** If true the weapon traces every tick while active; else the caller must poll PerformHitTrace. */
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Combat")
 	bool bAutoTickHitTrace = true;
+
+	/**
+	 * Fallback damage GE used when WeaponData->DamageEffect is unset. Defaults to
+	 * USLGE_WeaponDamage; can be overridden in BP for project-wide custom damage rules.
+	 */
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Combat")
+	TSubclassOf<UGameplayEffect> DefaultDamageEffectClass;
+
+	/**
+	 * If true (default), PerformHitTrace will automatically call ApplyDamageToTarget on
+	 * each newly hit actor right after broadcasting OnWeaponHit. Disable this when an
+	 * ability wants to gate damage with extra logic (e.g. parry checks) and apply it manually.
+	 */
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Combat")
+	bool bAutoApplyDamageOnHit = true;
 
 private:
 	bool bHitDetectionActive = false;

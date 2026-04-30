@@ -13,6 +13,7 @@
 class USpringArmComponent;
 class UCameraComponent;
 class UInputAction;
+class USLLockOnComponent;
 struct FInputActionValue;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
@@ -33,7 +34,11 @@ class ASoulslikeCharacter : public ACharacter, public IAbilitySystemInterface
 	/** Follow camera */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
 	UCameraComponent* FollowCamera;
-	
+
+	/** Lock-on logic component. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
+	USLLockOnComponent* LockOnComponent;
+
 protected:
 
 	/** Jump Input Action */
@@ -63,6 +68,14 @@ protected:
 	/** Skill slot 2 input action. */
 	UPROPERTY(EditAnywhere, Category = "Input")
 	UInputAction* SkillTwoAction;
+
+	/** Dodge / roll input action — drives PlayerAbility.Dodge. */
+	UPROPERTY(EditAnywhere, Category = "Input")
+	UInputAction* DodgeAction;
+
+	/** Toggle lock-on input action (single press toggles). */
+	UPROPERTY(EditAnywhere, Category = "Input")
+	UInputAction* LockOnAction;
 
 	// The list of enemies hit during the current swing
 	UPROPERTY()
@@ -97,6 +110,12 @@ protected:
 	void SkillOne();
 	void SkillTwo();
 
+	/** Dodge input handler — activates the dodge ability. */
+	void Dodge();
+
+	/** Lock-on toggle input handler. */
+	void LockOnToggle();
+
 public:
 
 	UFUNCTION(BlueprintCallable, Category = "GAS")
@@ -126,6 +145,29 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Input|Skill")
 	virtual void DoActivateSkill(ESLSkillSlot Slot);
 
+	/** Activate the dodge ability via its activation tag. Safe to call from BP / UI. */
+	UFUNCTION(BlueprintCallable, Category = "Input")
+	virtual void DoDodge();
+
+	/**
+	 * Apply a stamina cost to this character via USLGE_StaminaCost. Pass a POSITIVE
+	 * cost — the helper negates internally before packing the SetByCaller magnitude.
+	 * Returns true if the cost was applied (i.e. the character had an ASC).
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Combat|Stamina")
+	virtual bool ApplyStaminaCost(float Cost);
+
+	/**
+	 * Returns true if Stamina >= RequiredAmount. Lightweight check for combat
+	 * abilities to call before committing.
+	 */
+	UFUNCTION(BlueprintPure, Category = "Combat|Stamina")
+	bool HasEnoughStamina(float RequiredAmount) const;
+
+	/** True once the lethal hit has set State.Dead on this actor's ASC. */
+	UFUNCTION(BlueprintPure, Category = "Combat|Status")
+	bool IsDead() const;
+
 	// visual trace
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	void PerformWeaponTrace();
@@ -141,5 +183,8 @@ public:
 
 	/** Returns FollowCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
+
+	/** Returns LockOn component **/
+	FORCEINLINE USLLockOnComponent* GetLockOnComponent() const { return LockOnComponent; }
 };
 
