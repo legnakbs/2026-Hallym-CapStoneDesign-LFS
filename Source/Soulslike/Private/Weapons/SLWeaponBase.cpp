@@ -1,11 +1,16 @@
 #include "Weapons/SLWeaponBase.h"
 
 #include "Weapons/SLWeaponDataAsset.h"
+#include "Weapons/SLWeaponTypes.h"
+#include "Abilities/SLGE_WeaponDamage.h"
 
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemInterface.h"
 #include "GameplayAbilitySpec.h"
+#include "GameplayEffect.h"
+#include "GameplayEffectTypes.h"
 #include "GameFramework/Character.h"
+#include "GameFramework/PlayerState.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/World.h"
@@ -26,6 +31,8 @@ ASLWeaponBase::ASLWeaponBase()
 	StaticMeshComp->SetupAttachment(RootComponent);
 	StaticMeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	StaticMeshComp->SetGenerateOverlapEvents(false);
+
+	DefaultDamageEffectClass = USLGE_WeaponDamage::StaticClass();
 }
 
 void ASLWeaponBase::BeginPlay()
@@ -260,9 +267,70 @@ void ASLWeaponBase::PerformHitTrace()
 
 		HitActorsThisSwing.Add(HitActor);
 		OnWeaponHit.Broadcast(HitActor, Hit);
+
+		// Auto-apply the damage GE on the server. Designers can disable this and
+		// have the owning ability apply damage manually for special-case logic.
+		if (bAutoApplyDamageOnHit && HasAuthority())
+		{
+			ApplyDamageToTarget(HitActor, Hit);
+		}
 	}
 
 	LastTraceStart = Start;
 	LastTraceEnd = End;
 	bHasPrevTrace = true;
+}
+
+void ASLWeaponBase::ApplyDamageToTarget(AActor* Target, const FHitResult& Hit)
+{
+	if (!Target || !WeaponData) { return; }
+
+	UAbilitySystemComponent* SourceASC = GetOwnerASC();
+	if (!SourceASC) { return; }
+
+	// Pull the target's ASC. Targets are expected to expose ASC either directly
+	// (e.g. enemy pawns) or via PlayerState (player characters).
+	UAbilitySystemComponent* TargetASC = nullptr;
+	if (IAbilitySystemInterface* ASI = Cast<IAbilitySystemInterface>(Target))
+	{
+		TargetASC = ASI->GetAbilitySystemComponent();
+	}
+	else if (APawn* Pawn = Cast<APawn>(Target))
+	{
+		if (IAbilitySystemInterface* PSAsi = Cast<IAbilitySystemInterface>(Pawn->GetPlayerState()))
+		{
+			TargetASC = PSAsi->GetAbilitySystemComponent();
+		}
+	}
+	if (!TargetASC) { return; }
+
+	// Per-weapon override wins; otherwise fall back to the project default.
+	TSubclassOf<UGameplayEffect> EffectClass = WeaponData->DamageEffect
+		? WeaponData->DamageEffect
+		: DefaultDamageEffectClass;
+	if (!EffectClass) { return; }
+
+	FGameplayEffectContextHandle Ctx = SourceASC->MakeEffectContext();
+	Ctx.AddSourceObject(this);
+	Ctx.AddInstigator(OwnerCharacter, this);
+	Ctx.AddHitResult(Hit);
+
+	FGameplayEffectSpecHandle SpecHandle = SourceASC->MakeOutgoingSpec(EffectClass, /*Level*/ 1.f, Ctx);
+	if (!SpecHandle.IsValid()) { return; }
+
+	// Pack BaseDamage into the SetByCaller magnitude consumed by USLGE_WeaponDamage.
+	const FGameplayTag DamageTag = FGameplayTag::RequestGameplayTag(SLCombatTags::SetByCaller_DamageBase, /*ErrorIfNotFound*/ false);
+	if (DamageTag.IsValid())
+	{
+		SpecHandle.Data->SetSetByCallerMagnitude(DamageTag, WeaponData->BaseDamage);
+	}
+
+	// Optional poise damage rides along on the same spec for GEs that consume it.
+	const FGameplayTag PoiseTag = FGameplayTag::RequestGameplayTag(SLCombatTags::SetByCaller_PoiseDamage, /*ErrorIfNotFound*/ false);
+	if (PoiseTag.IsValid())
+	{
+		SpecHandle.Data->SetSetByCallerMagnitude(PoiseTag, WeaponData->PoiseDamage);
+	}
+
+	SourceASC->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), TargetASC);
 }

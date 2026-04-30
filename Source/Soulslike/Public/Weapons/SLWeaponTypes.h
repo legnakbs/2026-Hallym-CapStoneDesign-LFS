@@ -40,3 +40,18 @@ enum class ESLDamageType : uint8
 	Lightning	UMETA(DisplayName = "Lightning"),
 	Dark		UMETA(DisplayName = "Dark")
 };
+
+/**
+ * Centralized gameplay tag names for the combat system. Resolved via
+ * FGameplayTag::RequestGameplayTag at call time — the tags must exist in the
+ * project's tag table (DefaultGameplayTags.ini or equivalent).
+ */
+namespace SLCombatTags
+{
+	// SetByCaller magnitude tag used by USLGE_WeaponDamage. The caller (weapon /
+	// ability) sets this to the final damage value before applying the spec.
+	static const FName SetByCaller_DamageBase = TEXT("Data.Damage.Base");
+
+	// SetByCaller magnitude tag for poise damage. Same pattern as Damage.
+	static const FName SetByCaller_PoiseDamage = TEXT("Data.Damage.Poise");
+}
