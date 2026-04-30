@@ -16,16 +16,18 @@ USLGameplayAbility_Dodge::USLGameplayAbility_Dodge()
 	NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::LocalPredicted;
 
 	StaminaCostGEClass = USLGE_StaminaCost::StaticClass();
-
-	// Tags granted while the ability is active. Attack abilities that block on
-	// State.Dodging will be cancelled, damage GEs that check State.Invulnerable
-	// will short-circuit. Tags are only valid if registered in the project tag table.
+	
 	const FGameplayTag DodgingTag = FGameplayTag::RequestGameplayTag(SLCombatTags::State_Dodging, /*ErrorIfNotFound*/ false);
 	const FGameplayTag InvulnTag = FGameplayTag::RequestGameplayTag(SLCombatTags::State_Invulnerable, /*ErrorIfNotFound*/ false);
-	if (DodgingTag.IsValid()) { ActivationOwnedTags.AddTag(DodgingTag); }
-	if (InvulnTag.IsValid()) { ActivationOwnedTags.AddTag(InvulnTag); }
+	if (DodgingTag.IsValid())
+	{
+		ActivationOwnedTags.AddTag(DodgingTag);
+	}
+	if (InvulnTag.IsValid())
+	{ 
+		ActivationOwnedTags.AddTag(InvulnTag);
+	}
 
-	// Identifying activation tag — character input maps "PlayerAbility.Dodge" here.
 	const FGameplayTag ActivateTag = FGameplayTag::RequestGameplayTag(SLCombatTags::Activate_Dodge, /*ErrorIfNotFound*/ false);
 	if (ActivateTag.IsValid())
 	{
@@ -33,15 +35,28 @@ USLGameplayAbility_Dodge::USLGameplayAbility_Dodge()
 		AssetTags.AddTag(ActivateTag);
 		SetAssetTags(AssetTags);
 	}
+	
 }
 
 bool USLGameplayAbility_Dodge::CanActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayTagContainer* SourceTags, const FGameplayTagContainer* TargetTags, FGameplayTagContainer* OptionalRelevantTags) const
 {
+	GEngine->AddOnScreenDebugMessage(
+		-1,           // 고유 키 (동일 키 사용 시 메시지 덮어씀, -1은 계속 추가)
+		5.0f,         // 표시 시간 (초)
+		FColor::Green,  // 글자 색상
+		TEXT("Check if can active ability 1")
+	);
 	if (!Super::CanActivateAbility(Handle, ActorInfo, SourceTags, TargetTags, OptionalRelevantTags))
 	{
 		return false;
 	}
-
+	GEngine->AddOnScreenDebugMessage(
+		-1,           // 고유 키 (동일 키 사용 시 메시지 덮어씀, -1은 계속 추가)
+		5.0f,         // 표시 시간 (초)
+		FColor::Green,  // 글자 색상
+		TEXT("Check if can active ability 2")
+	);
+	
 	// Block dodge if there isn't enough stamina available.
 	if (ActorInfo)
 	{
@@ -49,11 +64,25 @@ bool USLGameplayAbility_Dodge::CanActivateAbility(const FGameplayAbilitySpecHand
 		{
 			if (ASC->GetNumericAttribute(USLCharacterAttributeSet::GetStaminaAttribute()) < StaminaCost)
 			{
+				GEngine->AddOnScreenDebugMessage(
+					-1,           // 고유 키 (동일 키 사용 시 메시지 덮어씀, -1은 계속 추가)
+					5.0f,         // 표시 시간 (초)
+					FColor::Green,  // 글자 색상
+					TEXT("Don't have enough stamina")
+				);
+	
 				return false;
 			}
 		}
 	}
 
+	GEngine->AddOnScreenDebugMessage(
+		-1,           // 고유 키 (동일 키 사용 시 메시지 덮어씀, -1은 계속 추가)
+		5.0f,         // 표시 시간 (초)
+		FColor::Green,  // 글자 색상
+		TEXT("Succeed")
+	);
+	
 	return true;
 }
 
