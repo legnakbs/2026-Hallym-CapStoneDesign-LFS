@@ -75,4 +75,8 @@ namespace SLCombatTags
 	// Sent as a gameplay event the moment a lethal hit lands. Listeners are
 	// expected on the dying actor — death montage, ragdoll, AI cleanup, etc.
 	static const FName Event_Death = TEXT("Event.Combat.Death");
+
+	// GameplayCue tag triggered on every damage application. BP cue handlers
+	// implement the visual / audio / hit-flinch montage response.
+	static const FName Cue_Hit = TEXT("GameplayCue.Combat.Hit");
 }

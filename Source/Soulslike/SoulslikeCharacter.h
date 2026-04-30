@@ -13,6 +13,7 @@
 class USpringArmComponent;
 class UCameraComponent;
 class UInputAction;
+class USLLockOnComponent;
 struct FInputActionValue;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
@@ -33,7 +34,11 @@ class ASoulslikeCharacter : public ACharacter, public IAbilitySystemInterface
 	/** Follow camera */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
 	UCameraComponent* FollowCamera;
-	
+
+	/** Lock-on logic component. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
+	USLLockOnComponent* LockOnComponent;
+
 protected:
 
 	/** Jump Input Action */
@@ -67,6 +72,10 @@ protected:
 	/** Dodge / roll input action — drives PlayerAbility.Dodge. */
 	UPROPERTY(EditAnywhere, Category = "Input")
 	UInputAction* DodgeAction;
+
+	/** Toggle lock-on input action (single press toggles). */
+	UPROPERTY(EditAnywhere, Category = "Input")
+	UInputAction* LockOnAction;
 
 	// The list of enemies hit during the current swing
 	UPROPERTY()
@@ -103,6 +112,9 @@ protected:
 
 	/** Dodge input handler — activates the dodge ability. */
 	void Dodge();
+
+	/** Lock-on toggle input handler. */
+	void LockOnToggle();
 
 public:
 
@@ -171,5 +183,8 @@ public:
 
 	/** Returns FollowCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
+
+	/** Returns LockOn component **/
+	FORCEINLINE USLLockOnComponent* GetLockOnComponent() const { return LockOnComponent; }
 };
 

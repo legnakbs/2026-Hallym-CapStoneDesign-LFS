@@ -17,6 +17,7 @@
 #include "Abilities/SLSkillTypes.h"
 #include "Abilities/SLGE_StaminaCost.h"
 #include "SLCharacterAttributeSet.h"
+#include "Combat/SLLockOnComponent.h"
 #include "Weapons/SLWeaponTypes.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "AbilitySystemBlueprintLibrary.h"
@@ -57,6 +58,9 @@ ASoulslikeCharacter::ASoulslikeCharacter()
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 	FollowCamera->bUsePawnControlRotation = false;
+
+	// Lock-on logic component — drives controller rotation while a target is held.
+	LockOnComponent = CreateDefaultSubobject<USLLockOnComponent>(TEXT("LockOnComponent"));
 
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
@@ -146,6 +150,12 @@ void ASoulslikeCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
 		if (DodgeAction)
 		{
 			EnhancedInputComponent->BindAction(DodgeAction, ETriggerEvent::Started, this, &ASoulslikeCharacter::Dodge);
+		}
+
+		// lock-on
+		if (LockOnAction)
+		{
+			EnhancedInputComponent->BindAction(LockOnAction, ETriggerEvent::Started, this, &ASoulslikeCharacter::LockOnToggle);
 		}
 	}
 	else
@@ -273,6 +283,14 @@ void ASoulslikeCharacter::SkillTwo()
 void ASoulslikeCharacter::Dodge()
 {
 	DoDodge();
+}
+
+void ASoulslikeCharacter::LockOnToggle()
+{
+	if (LockOnComponent)
+	{
+		LockOnComponent->ToggleLockOn();
+	}
 }
 
 void ASoulslikeCharacter::DoDodge()

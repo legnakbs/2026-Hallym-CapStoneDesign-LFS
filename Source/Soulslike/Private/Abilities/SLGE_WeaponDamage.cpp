@@ -20,4 +20,14 @@ USLGE_WeaponDamage::USLGE_WeaponDamage()
 	DamageMod.ModifierMagnitude = FGameplayEffectModifierMagnitude(SetByCaller);
 
 	Modifiers.Add(DamageMod);
+
+	// Fire the project's hit GameplayCue every time this GE applies. BP cue
+	// handlers attached to GameplayCue.Combat.Hit own the visuals / audio.
+	const FGameplayTag HitCueTag = FGameplayTag::RequestGameplayTag(SLCombatTags::Cue_Hit, /*ErrorIfNotFound*/ false);
+	if (HitCueTag.IsValid())
+	{
+		FGameplayEffectCue Cue;
+		Cue.GameplayCueTags.AddTag(HitCueTag);
+		GameplayCues.Add(Cue);
+	}
 }
