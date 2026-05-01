@@ -23,7 +23,7 @@ void AEnemySpawner::BeginPlay()
 		if (bHasSeenFirstWorld)
 		{
 			const AEnemySpawner* DefaultSpawner = GetDefault<AEnemySpawner>();
-			SpawnChanceBonusFromMapLoads += DefaultSpawner ? DefaultSpawner->SpawnChanceIncreasePerMapLoad : 0.2f;
+			SpawnChanceBonusFromMapLoads += DefaultSpawner ? DefaultSpawner->SpawnChanceIncreasePerMapLoad : 0.0f;
 		}
 		else
 		{

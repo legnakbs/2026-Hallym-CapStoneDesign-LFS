@@ -27,7 +27,7 @@ protected:
 
 	// Added to SpawnChance whenever a new map/world is loaded after the first load.
 	UPROPERTY(EditAnywhere, Category = "Spawn|Progression", meta = (ClampMin = "0.0", ClampMax = "1.0", UIMin = "0.0", UIMax = "1.0"))
-	float SpawnChanceIncreasePerMapLoad = 0.05f;
+	float SpawnChanceIncreasePerMapLoad = 0.2f;
 
 	// Final capped chance after map-load bonus is applied.
 	UPROPERTY(EditAnywhere, Category = "Spawn|Progression", meta = (ClampMin = "0.0", ClampMax = "1.0", UIMin = "0.0", UIMax = "1.0"))
