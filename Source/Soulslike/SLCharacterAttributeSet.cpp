@@ -10,8 +10,6 @@
 
 namespace
 {
-	// How long Stamina must go untouched before regen resumes. Short enough to feel
-	// responsive, long enough that mid-combo regen doesn't refund stamina cost.
 	constexpr float StaminaRegenResumeDelay = 0.8f;
 }
 

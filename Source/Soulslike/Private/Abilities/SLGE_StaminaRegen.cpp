@@ -1,6 +1,7 @@
 #include "Abilities/SLGE_StaminaRegen.h"
 
 #include "SLCharacterAttributeSet.h"
+#include "GameplayEffectComponents/TargetTagRequirementsGameplayEffectComponent.h"
 #include "Weapons/SLWeaponTypes.h"
 
 USLGE_StaminaRegen::USLGE_StaminaRegen()
@@ -19,9 +20,15 @@ USLGE_StaminaRegen::USLGE_StaminaRegen()
 
 	// Pause regen ticks while the target is spending stamina. The tag is set in
 	// USLCharacterAttributeSet::PostGameplayEffectExecute and cleared on a timer.
-	const FGameplayTag SpendingTag = FGameplayTag::RequestGameplayTag(SLCombatTags::State_StaminaSpending, /*ErrorIfNotFound*/ false);
-	if (SpendingTag.IsValid())
+	UTargetTagRequirementsGameplayEffectComponent* TargetTagComp = CreateDefaultSubobject<UTargetTagRequirementsGameplayEffectComponent>(TEXT("TargetTagRequirementsComponent"));
+	if (TargetTagComp)
 	{
-		OngoingTagRequirements.IgnoreTags.AddTag(SpendingTag);
+		GEComponents.Add(TargetTagComp);
+		
+		const FGameplayTag SpendingTag = FGameplayTag::RequestGameplayTag(SLCombatTags::State_StaminaSpending, /*ErrorIfNotFound*/ false);
+		if (SpendingTag.IsValid())
+		{
+			TargetTagComp->OngoingTagRequirements.IgnoreTags.AddTag(SpendingTag);
+		}
 	}
 }
