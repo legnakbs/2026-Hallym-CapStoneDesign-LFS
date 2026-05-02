@@ -7,11 +7,27 @@
 #include "InputMappingContext.h"
 #include "Blueprint/UserWidget.h"
 #include "Soulslike.h"
+#include "UI/SoulslikeHUDWidget.h"
 #include "Widgets/Input/SVirtualJoystick.h"
 
 void ASoulslikePlayerController::BeginPlay()
 {
 	Super::BeginPlay();
+
+	// only spawn HUD for local player controllers
+	if (IsLocalPlayerController() && HUDWidgetClass)
+	{
+		HUDWidget = CreateWidget<USoulslikeHUDWidget>(this, HUDWidgetClass);
+
+		if (HUDWidget)
+		{
+			HUDWidget->AddToPlayerScreen(10);
+		}
+		else
+		{
+			UE_LOG(LogSoulslike, Error, TEXT("Could not spawn HUD widget."));
+		}
+	}
 
 	// only spawn touch controls on local player controllers
 	if (ShouldUseTouchControls() && IsLocalPlayerController())
@@ -64,4 +80,16 @@ bool ASoulslikePlayerController::ShouldUseTouchControls() const
 {
 	// are we on a mobile platform? Should we force touch?
 	return SVirtualJoystick::ShouldDisplayTouchInterface() || bForceTouchControls;
+}
+
+void ASoulslikePlayerController::SetHUDVitals(float Health, float MaxHealth, float Stamina, float MaxStamina, float Mana, float MaxMana)
+{
+	if (!HUDWidget)
+	{
+		return;
+	}
+
+	HUDWidget->UpdateHealth(Health, MaxHealth);
+	HUDWidget->UpdateStamina(Stamina, MaxStamina);
+	HUDWidget->UpdateMana(Mana, MaxMana);
 }
